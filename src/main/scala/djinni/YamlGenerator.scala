@@ -16,7 +16,6 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
   val objcppMarshal = new ObjcppMarshal(spec)
   val javaMarshal = new JavaMarshal(spec)
   val jniMarshal = new JNIMarshal(spec)
-  val cppCliMarshal = new CppCliMarshal(spec)
 
   case class QuotedString(
       str: String
@@ -75,7 +74,6 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
     w.wl("objcpp:").nested { write(w, objcpp(td)) }
     w.wl("java:").nested { write(w, java(td)) }
     w.wl("jni:").nested { write(w, jni(td)) }
-    w.wl("cs:").nested { write(w, cs(td)) }
   }
 
   private def write(w: IndentWriter, m: Map[String, Any]): Unit = {
@@ -181,13 +179,6 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
     "typeSignature" -> QuotedString(jniMarshal.fqTypename(td.ident, td.body))
   )
 
-  private def cs(td: TypeDecl) = Map[String, Any](
-    "translator" -> QuotedString(cppCliMarshal.helperName(mexpr(td))),
-    "header" -> QuotedString(cppCliMarshal.include(td.ident)),
-    "typename" -> cppCliMarshal.fqParamType(mexpr(td)),
-    "reference" -> cppCliMarshal.isReference(td)
-  )
-
   // TODO: there has to be a way to do all this without the MExpr/Meta conversions?
   private def mexpr(td: TypeDecl) = MExpr(meta(td), List())
 
@@ -250,8 +241,7 @@ object YamlGenerator {
       objcOutRequired: Boolean,
       objcppOutRequired: Boolean,
       javaOutRequired: Boolean,
-      jniOutRequired: Boolean,
-      cppCliOutRequired: Boolean
+      jniOutRequired: Boolean
   ): MExtern = MExtern(
     td.ident.name.stripPrefix(
       td.properties("prefix").toString
@@ -344,31 +334,6 @@ object YamlGenerator {
         "typeSignature",
         _.toString
       )
-    ),
-    MExtern.Cs(
-      nested(
-        td,
-        isRequired = cppCliOutRequired,
-        "cs",
-        "translator",
-        _.toString
-      ),
-      nested(td, isRequired = cppCliOutRequired, "cs", "header", _.toString),
-      nested(td, isRequired = cppCliOutRequired, "cs", "typename", _.toString),
-      nested(
-        td,
-        isRequired = cppCliOutRequired,
-        "cs",
-        "reference",
-        _.asInstanceOf[Boolean]
-      ),
-      nested(
-        td,
-        false,
-        "cs",
-        "generic",
-        _.asInstanceOf[Boolean]
-      ) orElse Option.apply[Boolean](false)
     )
   )
 

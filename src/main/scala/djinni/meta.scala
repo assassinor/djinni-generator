@@ -43,8 +43,7 @@ package object meta {
       objc: MExtern.Objc,
       objcpp: MExtern.Objcpp,
       java: MExtern.Java,
-      jni: MExtern.Jni,
-      cs: MExtern.Cs
+      jni: MExtern.Jni
   ) extends Meta
   object MExtern {
     // These hold the information marshals need to interface with existing types correctly
@@ -100,17 +99,6 @@ package object meta {
         typeSignature: Option[
           String
         ] // The mangled Java type signature (e.g. "Ljava/lang/String;")
-    )
-    case class Cs(
-        translator: Option[
-          String
-        ], // C++ typename containing ToCpp/FromCpp methods
-        header: Option[String], // Where to find the translator class
-        typename: Option[String],
-        reference: Option[Boolean],
-        generic: Option[
-          Boolean
-        ] // Set to false to exclude type arguments from the C++/CLI typename. This is false by default. Useful if template arguments are only used in C++.
     )
   }
 

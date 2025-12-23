@@ -20,12 +20,6 @@ djinni \
    \
    --objcpp-out OBJC_OUTPUT_FOLDER \
    \
-   --py-out PYTHON_OUTPUT_FOLDER \
-   --pycffi-out CFFI_OUTPUT_FOLDER \ # Required for Python support
-   --pycffi-package-name PyCFFIlib \
-   --pycffi-dynamic-lib-list mylib \
-   --c-wrapper-out C_WRAPPER_OUTPUT_FOLDER \ # Required for Python support
-   \
    --idl MY_PROJECT.djinni
 
 ```
@@ -118,32 +112,10 @@ djinni \
 | `--objc-extended-record-include-prefix <prefix>` | The prefix path for `#import` of the extended record Objective-C header (`.h`) files                                               |
 | `--objcpp-namespace <prefix>`                    | The namespace name to use for generated Objective-C++ classes.                                                                     |
 
-### Python
 
-| Argument                             | Description                                                             |
-|--------------------------------------|-------------------------------------------------------------------------|
-| `--py-out <out-folder>`              | The output folder for Python files (Generator disabled if unspecified). |
-| `--pycffi-out <out-folder>`          | The output folder for PyCFFI files (Generator disabled if unspecified). |
-| `--pycffi-package-name ...`          | The package name to use for the generated PyCFFI classes.               |
-| `--pycffi-dynamic-lib-list ...`      | The names of the dynamic libraries to be linked with PyCFFI.            |
-| `--py-import-prefix <import-prefix>` | The import prefix used within python generated files (default: "")      |
 
-### C wrapper
 
-| Argument                                  | Description                                                                            |
-|-------------------------------------------|----------------------------------------------------------------------------------------|
-| `--c-wrapper-out <out-folder>`            | The output folder for C wrapper files (Generator disabled if unspecified).             |
-| `--c-wrapper-header-out <out-folder>`     | The output folder for C wrapper header files (default: the same as `--c-wrapper-out`). |
-| `--c-wrapper-include-prefix <prefix>`     | The prefix for #includes of C wrapper header files from C wrapper C++ files.           |
-| `--c-wrapper-include-cpp-prefix <prefix>` | The prefix for #includes of C++ header files from C wrapper C++ files.                 |
 
-### C++/CLI
-
-| Argument                               | Description                                                                |
-|----------------------------------------|----------------------------------------------------------------------------|
-| `--cppcli-out <out-folder>`            | The output folder for C++/CLI files (Generator disabled if unspecified).   |
-| `--cppcli-namespace ...`               | The namespace name to use for generated C++/CLI classes.                   |
-| `--cppcli-include-cpp-prefix <prefix>` | The prefix for `#include` of the main C++ header files from C++/CLI files. |
 
 
 ### Yaml Generation
@@ -204,31 +176,9 @@ Possible values: `FooBar`, `fooBar`, `foo_bar`, `FOO_BAR`, `m_fooBar`.
 | `--ident-objc-local`      | `fooBar` |
 | `--ident-objc-file`       | `FooBar` |
 
-#### Python
 
-| Argument                | Default   |
-|-------------------------|-----------|
-| `--ident-py-type`       | `foo_bar` |
-| `--ident-py-class-name` | `FooBar`  |
-| `--ident-py-type-param` | `foo_bar` |
-| `--ident-py-method`     | `foo_bar` |
-| `--ident-py-field`      | `foo_bar` |
-| `--ident-py-local`      | `foo_bar` |
-| `--ident-py-enum`       | `Foo_Bar` |
-| `--ident-py-const`      | `FOO_BAR` |
 
-#### C++/CLI
 
-| Argument                    | Default  |
-|-----------------------------|----------|
-| `--ident-cppcli-type`       | `FooBar` |
-| `--ident-cppcli-type-param` | `FooBar` |
-| `--ident-cppcli-property`   | `FooBar` |
-| `--ident-cppcli-method`     | `FooBar` |
-| `--ident-cppcli-local`      | `fooBar` |
-| `--ident-cppcli-enum`       | `FooBar` |
-| `--ident-cppcli-const`      | `FooBar` |
-| `--ident-cppcli-file`       | `FooBar` |
 
 Example:
 

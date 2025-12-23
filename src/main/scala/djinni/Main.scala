@@ -87,26 +87,12 @@ object Main {
     var objcFileIdentStyleOptional: Option[IdentConverter] = None
     var objcStrictProtocol: Boolean = true
     var objcppNamespace: String = "djinni_generated"
-    var cppCliOutFolder: Option[File] = None
-    var cppCliIdentStyle = IdentStyle.csDefault
-    var cppCliNamespace: String = ""
-    var cppCliIncludeCppPrefix: String = ""
     var inFileListPath: Option[File] = None
     var outFileListPath: Option[File] = None
     var skipGeneration: Boolean = false
     var yamlOutFolder: Option[File] = None
     var yamlOutFile: Option[String] = None
     var yamlPrefix: String = ""
-    var pyOutFolder: Option[File] = None
-    var pyIdentStyle = IdentStyle.pythonDefault
-    var cWrapperOutFolder: Option[File] = None
-    var cWrapperHeaderOutFolderOptional: Option[File] = None
-    var cWrapperIncludePrefix: String = ""
-    var cWrapperIncludeCppPrefix: String = ""
-    var pycffiPackageName: String = ""
-    var pycffiDynamicLibList: String = ""
-    var pycffiOutFolder: Option[File] = None
-    var pyImportPrefix: String = ""
     var cppJsonSerialization: Option[String] = None
 
     val argParser: OptionParser[Unit] = new scopt.OptionParser[Unit]("djinni") {
@@ -436,76 +422,6 @@ object Main {
         .foreach(objcppNamespace = _)
         .text("The namespace name to use for generated Objective-C++ classes.")
 
-      note("\nPython")
-      opt[File]("py-out")
-        .valueName("<out-folder>")
-        .foreach(x => pyOutFolder = Some(x))
-        .text(
-          "The output folder for Python files (Generator disabled if unspecified)."
-        )
-      opt[File]("pycffi-out")
-        .valueName("<out-folder>")
-        .foreach(x => pycffiOutFolder = Some(x))
-        .text(
-          "The output folder for PyCFFI files (Generator disabled if unspecified)."
-        )
-      opt[String]("pycffi-package-name")
-        .valueName("...")
-        .foreach(x => pycffiPackageName = x)
-        .text("The package name to use for the generated PyCFFI classes.")
-      opt[String]("pycffi-dynamic-lib-list")
-        .valueName("...")
-        .foreach(x => pycffiDynamicLibList = x)
-        .text("The names of the dynamic libraries to be linked with PyCFFI.")
-      opt[String]("py-import-prefix")
-        .valueName("<import-prefix>")
-        .foreach(pyImportPrefix = _)
-        .text(
-          "The import prefix used within python generated files (default: \"\")"
-        )
-      note("\nC wrapper")
-      opt[File]("c-wrapper-out")
-        .valueName("<out-folder>")
-        .foreach(x => cWrapperOutFolder = Some(x))
-        .text(
-          "The output folder for C wrapper files (Generator disabled if unspecified)."
-        )
-      opt[File]("c-wrapper-header-out")
-        .valueName("<out-folder>")
-        .foreach(x => cWrapperHeaderOutFolderOptional = Some(x))
-        .text(
-          "The output folder for C wrapper header files (default: the same as --c-wrapper-out)."
-        )
-      opt[String]("c-wrapper-include-prefix")
-        .valueName("<prefix>")
-        .foreach(x => cWrapperIncludePrefix = x)
-        .text(
-          "The prefix for #includes of C wrapper header files from C wrapper C++ files."
-        )
-      opt[String]("c-wrapper-include-cpp-prefix")
-        .valueName("<prefix>")
-        .foreach(x => cWrapperIncludeCppPrefix = x)
-        .text(
-          "The prefix for #includes of C++ header files from C wrapper C++ files."
-        )
-
-      note("\nC++/CLI")
-      opt[File]("cppcli-out")
-        .valueName("<out-folder>")
-        .foreach(x => cppCliOutFolder = Some(x))
-        .text(
-          "The output folder for C++/CLI files (Generator disabled if unspecified)."
-        )
-      opt[String]("cppcli-namespace")
-        .valueName("...")
-        .foreach(cppCliNamespace = _)
-        .text("The namespace name to use for generated C++/CLI classes.")
-      opt[String]("cppcli-include-cpp-prefix")
-        .valueName("<prefix>")
-        .foreach(x => cppCliIncludeCppPrefix = x)
-        .text(
-          "The prefix for #include of the main C++ header files from C++/CLI files."
-        )
       note("\nYaml Generation")
       opt[File]("yaml-out")
         .valueName("<out-folder>")
@@ -649,90 +565,6 @@ object Main {
         "FooBar",
         c => { objcFileIdentStyleOptional = Some(c) }
       )
-
-      note("\nPython options:")
-      identStyle(
-        "ident-py-type",
-        "foo_bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(ty = c) }
-      )
-      identStyle(
-        "ident-py-class-name",
-        "FooBar",
-        c => { pyIdentStyle = pyIdentStyle.copy(className = c) }
-      )
-      identStyle(
-        "ident-py-type-param",
-        "foo_bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(typeParam = c) }
-      )
-      identStyle(
-        "ident-py-method",
-        "foo_bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(method = c) }
-      )
-      identStyle(
-        "ident-py-field",
-        "foo_bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(field = c) }
-      )
-      identStyle(
-        "ident-py-local",
-        "foo_bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(local = c) }
-      )
-      identStyle(
-        "ident-py-enum",
-        "Foo_Bar",
-        c => { pyIdentStyle = pyIdentStyle.copy(enum = c) }
-      )
-      identStyle(
-        "ident-py-const",
-        "FOO_BAR",
-        c => { pyIdentStyle = pyIdentStyle.copy(const = c) }
-      )
-
-      note("\nC++/CLI options:")
-      identStyle(
-        "ident-cppcli-type",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(ty = c) }
-      )
-      identStyle(
-        "ident-cppcli-type-param",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(typeParam = c) }
-      )
-      identStyle(
-        "ident-cppcli-property",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(property = c) }
-      )
-      identStyle(
-        "ident-cppcli-method",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(method = c) }
-      )
-      identStyle(
-        "ident-cppcli-local",
-        "fooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(local = c) }
-      )
-      identStyle(
-        "ident-cppcli-enum",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(enum = c) }
-      )
-      identStyle(
-        "ident-cppcli-const",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(const = c) }
-      )
-      identStyle(
-        "ident-cppcli-file",
-        "FooBar",
-        c => { cppCliIdentStyle = cppCliIdentStyle.copy(file = c) }
-      )
     }
 
     if (argParser.parse(args, ()).isEmpty) {
@@ -752,10 +584,6 @@ object Main {
     val objcppHeaderOutFolder =
       if (objcppHeaderOutFolderOptional.isDefined) objcppHeaderOutFolderOptional
       else objcppOutFolder
-    val cWrapperHeaderOutFolder =
-      if (cWrapperHeaderOutFolderOptional.isDefined)
-        cWrapperHeaderOutFolderOptional
-      else cWrapperOutFolder
     val jniClassIdentStyle =
       jniClassIdentStyleOptional.getOrElse(cppIdentStyle.ty)
     jniBaseLibClassIdentStyleOptional.getOrElse(jniClassIdentStyle)
@@ -828,8 +656,7 @@ object Main {
       objcOutRequired = objcOutFolder.isDefined,
       objcppOutRequired = objcppOutFolder.isDefined,
       javaOutRequired = javaOutFolder.isDefined,
-      jniOutRequired = jniOutFolder.isDefined,
-      cppCliOutRequired = cppCliOutFolder.isDefined
+      jniOutRequired = jniOutFolder.isDefined
     ) match {
       case Some(err) =>
         System.err.println(err)
@@ -915,10 +742,6 @@ object Main {
       objcppIncludeObjcPrefix,
       objcppNamespace,
       objcSwiftBridgingHeaderWriter,
-      cppCliOutFolder,
-      cppCliIdentStyle,
-      cppCliNamespace,
-      cppCliIncludeCppPrefix,
       objcSwiftBridgingHeaderName,
       objcClosedEnums,
       objcStrictProtocol,
@@ -927,17 +750,7 @@ object Main {
       yamlOutFolder,
       yamlOutFile,
       yamlPrefix,
-      pyOutFolder,
-      pyIdentStyle,
-      pycffiOutFolder,
-      pycffiPackageName,
-      pycffiDynamicLibList,
       idlFile.getName(),
-      cWrapperOutFolder,
-      cWrapperHeaderOutFolder,
-      cWrapperIncludePrefix,
-      cWrapperIncludeCppPrefix,
-      pyImportPrefix,
       cppJsonSerialization
     )
 

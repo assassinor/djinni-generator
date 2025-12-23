@@ -79,10 +79,6 @@ package object generatorTools {
       objcppIncludeObjcPrefix: String,
       objcppNamespace: String,
       objcSwiftBridgingHeaderWriter: Option[Writer],
-      cppCliOutFolder: Option[File],
-      cppCliIdentStyle: CppCliIdentStyle,
-      cppCliNamespace: String,
-      cppCliIncludeCppPrefix: String,
       objcSwiftBridgingHeaderName: Option[String],
       objcClosedEnums: Boolean,
       objcStrictProtocol: Boolean,
@@ -91,17 +87,7 @@ package object generatorTools {
       yamlOutFolder: Option[File],
       yamlOutFile: Option[String],
       yamlPrefix: String,
-      pyOutFolder: Option[File],
-      pyIdentStyle: PythonIdentStyle,
-      pycffiOutFolder: Option[File],
-      pycffiPackageName: String,
-      pycffiDynamicLibList: String,
       idlFileName: String,
-      cWrapperOutFolder: Option[File],
-      cWrapperHeaderOutFolder: Option[File],
-      cWrapperIncludePrefix: String,
-      cWrapperIncludeCppPrefix: String,
-      pyImportPrefix: String,
       cppJsonSerialization: Option[String]
   )
 
@@ -147,28 +133,6 @@ package object generatorTools {
       const: IdentConverter
   )
 
-  case class PythonIdentStyle(
-      ty: IdentConverter,
-      className: IdentConverter,
-      typeParam: IdentConverter,
-      method: IdentConverter,
-      field: IdentConverter,
-      local: IdentConverter,
-      enum: IdentConverter,
-      const: IdentConverter
-  )
-  case class CppCliIdentStyle(
-      ty: IdentConverter,
-      typeParam: IdentConverter,
-      property: IdentConverter,
-      method: IdentConverter,
-      field: IdentConverter,
-      local: IdentConverter,
-      enum: IdentConverter,
-      const: IdentConverter,
-      file: IdentConverter
-  )
-
   object IdentStyle {
     val camelUpper: String => String = (s: String) =>
       s.split('_').map(firstUpper).mkString
@@ -211,28 +175,6 @@ package object generatorTools {
       local = camelLower,
       enum = camelUpper,
       const = camelUpper
-    )
-    val pythonDefault: PythonIdentStyle = PythonIdentStyle(
-      ty = underLower,
-      className = camelUpper,
-      typeParam = underLower,
-      method = underLower,
-      field = underLower,
-      local = underLower,
-      enum = underUpper,
-      const = underCaps
-    )
-
-    val csDefault: CppCliIdentStyle = CppCliIdentStyle(
-      ty = camelUpper,
-      typeParam = camelUpper,
-      property = camelUpper,
-      method = camelUpper,
-      field = prefix("_", camelLower),
-      local = camelLower,
-      enum = camelUpper,
-      const = camelUpper,
-      file = camelUpper
     )
 
     val styles: Map[String, String => String] = Map(
@@ -372,36 +314,11 @@ package object generatorTools {
           new SwiftBridgingHeaderGenerator(spec).generate(idl)
         }
       }
-      if (spec.cppCliOutFolder.isDefined) {
-        if (!spec.skipGeneration) {
-          createFolder("C++/CLI", spec.cppCliOutFolder.get)
-        }
-        new CppCliGenerator(spec).generate(idl)
-      }
       if (spec.yamlOutFolder.isDefined) {
         if (!spec.skipGeneration) {
           createFolder("YAML", spec.yamlOutFolder.get)
         }
         new YamlGenerator(spec).generate(idl)
-      }
-      if (spec.pyOutFolder.isDefined) {
-        if (!spec.skipGeneration) {
-          createFolder("Python", spec.pyOutFolder.get)
-        }
-        new PythonGenerator(spec).generate(idl)
-      }
-      if (spec.cWrapperOutFolder.isDefined) {
-        if (!spec.skipGeneration) {
-          createFolder("C", spec.cWrapperOutFolder.get)
-          createFolder("C header", spec.cWrapperHeaderOutFolder.get)
-        }
-        new CWrapperGenerator(spec).generate(idl)
-      }
-      if (spec.pycffiOutFolder.isDefined) {
-        if (!spec.skipGeneration) {
-          createFolder("Cffi", spec.pycffiOutFolder.get)
-        }
-        new CffiGenerator(spec).generate(idl)
       }
       None
     } catch {
@@ -528,8 +445,6 @@ abstract class Generator(spec: Spec) {
   val idCpp = spec.cppIdentStyle
   val idJava = spec.javaIdentStyle
   val idObjc = spec.objcIdentStyle
-  val idPython = spec.pyIdentStyle
-  val idCs = spec.cppCliIdentStyle
 
   def wrapNamespace(
       w: IndentWriter,

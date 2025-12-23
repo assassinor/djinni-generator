@@ -23,11 +23,6 @@ class IntegrationTest extends AnyFunSpec {
   final val OBJC_HEADERS = "objc-headers"
   final val OBJCPP = "objcpp"
   final val OBJCPP_HEADERS = "objcpp-headers"
-  final val PY = "python"
-  final val CFFI = "cffi"
-  final val CWRAPPER = "cwrapper"
-  final val CWRAPPER_HEADERS = "cwrapper-headers"
-  final val CPPCLI = "cppcli"
 
   type Cpp = List[String]
   def Cpp(params: String*) = List(params: _*)
@@ -47,16 +42,6 @@ class IntegrationTest extends AnyFunSpec {
   def ObjCpp(params: String*) = List(params: _*)
   type ObjCppHeaders = List[String]
   def ObjCppHeaders(params: String*) = List(params: _*)
-  type Python = List[String]
-  def Python(params: String*) = List(params: _*)
-  type PyCffi = List[String]
-  def PyCffi(params: String*) = List(params: _*)
-  type CWrapper = List[String]
-  def CWrapper(params: String*) = List(params: _*)
-  type CWrapperHeaders = List[String]
-  def CWrapperHeaders(params: String*) = List(params: _*)
-  type CppCli = List[String]
-  def CppCli(params: String*) = List(params: _*)
 
   /** Executes the djinni generator with the given parameters
     * @param parameters
@@ -84,12 +69,7 @@ class IntegrationTest extends AnyFunSpec {
     *   Whether to generate Java output. Default: true.
     * @param objc
     *   Whether to generate Objective C output. Default: true.
-    * @param python
-    *   Whether to generate Python output. Default: true.
-    * @param cWrapper
-    *   Whether to generate Python output. Default: true.
-    * @param cppCLI
-    *   Whether to generate Python output. Default: true.
+    *
     * @param useNNHeader
     *   Whether to use the nn.hpp header for non-null pointers. Default: false.
     * @param cppJsonSerialization
@@ -105,9 +85,6 @@ class IntegrationTest extends AnyFunSpec {
       cpp: Boolean = true,
       java: Boolean = true,
       objc: Boolean = true,
-      python: Boolean = true,
-      cWrapper: Boolean = true,
-      cppCLI: Boolean = true,
       useNNHeader: Boolean = false,
       cppOmitDefaultRecordCtor: Boolean = false,
       cppJsonSerialization: Option[String] = None
@@ -131,20 +108,7 @@ class IntegrationTest extends AnyFunSpec {
       cmd += s" --objcpp-out $baseOutputPath/$idl/$OBJCPP"
       cmd += s" --objcpp-header-out $baseOutputPath/$idl/$OBJCPP_HEADERS"
     }
-    if (python) {
-      cmd += s" --py-out $baseOutputPath/$idl/python"
-      cmd += s" --pycffi-out $baseOutputPath/$idl/cffi"
-    }
-    if (cWrapper) {
-      cmd += s" --c-wrapper-out $baseOutputPath/$idl/$CWRAPPER"
-      cmd += s" --c-wrapper-header-out $baseOutputPath/$idl/$CWRAPPER_HEADERS"
-      cmd += s" --c-wrapper-include-prefix ../$CWRAPPER_HEADERS/"
-      cmd += s" --c-wrapper-include-cpp-prefix ../$CPP_HEADERS/"
-    }
-    if (cppCLI) {
-      cmd += s" --cppcli-out $baseOutputPath/$idl/$CPPCLI"
-      cmd += s" --cppcli-include-cpp-prefix ../$CPP_HEADERS/"
-    }
+
     if (useNNHeader) {
       cmd += " --cpp-nn-header nn.hpp"
       cmd += " --cpp-nn-type dropbox::oxygen::nn_shared_ptr"

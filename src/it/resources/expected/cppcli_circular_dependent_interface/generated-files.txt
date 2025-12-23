@@ -1,4 +1,0 @@
-src/it/resources/result/cppcli_circular_dependent_interface/cppcli/OneInterface.hpp
-src/it/resources/result/cppcli_circular_dependent_interface/cppcli/OneInterface.cpp
-src/it/resources/result/cppcli_circular_dependent_interface/cppcli/AnotherInterface.hpp
-src/it/resources/result/cppcli_circular_dependent_interface/cppcli/AnotherInterface.cpp
