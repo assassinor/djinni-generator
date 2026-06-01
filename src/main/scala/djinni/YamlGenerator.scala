@@ -16,6 +16,8 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
   val objcppMarshal = new ObjcppMarshal(spec)
   val javaMarshal = new JavaMarshal(spec)
   val jniMarshal = new JNIMarshal(spec)
+  val etsMarshal = new EtsMarshal(spec)
+  val napiMarshal = new NapiMarshal(spec)
   val cppCliMarshal = new CppCliMarshal(spec)
 
   case class QuotedString(
@@ -75,6 +77,8 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
     w.wl("objcpp:").nested { write(w, objcpp(td)) }
     w.wl("java:").nested { write(w, java(td)) }
     w.wl("jni:").nested { write(w, jni(td)) }
+    w.wl("ets:").nested { write(w, ets(td)) }
+    w.wl("napi:").nested { write(w, napi(td)) }
     w.wl("cs:").nested { write(w, cs(td)) }
   }
 
@@ -119,10 +123,13 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
   )
 
   private def typeDef(td: TypeDecl) = {
-    def ext(e: Ext): String =
-      (if (e.cpp) " +c" else "") + (if (e.objc) " +o" else "") + (if (e.java)
-                                                                    " +j"
-                                                                  else "")
+    def ext(e: Ext): String = {
+      val cpp = if (e.cpp) " +c" else ""
+      val objc = if (e.objc) " +o" else ""
+      val java = if (e.java) " +j" else ""
+      val ohos = if (e.ohos) " +h" else ""
+      cpp + objc + java + ohos
+    }
     def deriving(r: Record) = {
       if (r.derivingTypes.isEmpty) {
         ""
@@ -179,6 +186,15 @@ class YamlGenerator(spec: Spec) extends Generator(spec) {
     "header" -> QuotedString(jniMarshal.include(td.ident)),
     "typename" -> jniMarshal.fqParamType(mexpr(td)),
     "typeSignature" -> QuotedString(jniMarshal.fqTypename(td.ident, td.body))
+  )
+
+  private def ets(td: TypeDecl) = Map[String, Any](
+    "typename" -> QuotedString(etsMarshal.fqTypename(td.ident, td.body))
+  )
+
+  private def napi(td: TypeDecl) = Map[String, Any](
+    "translator" -> QuotedString(napiMarshal.helperClass(mexpr(td))),
+    "header" -> QuotedString(napiMarshal.include(td.ident.name))
   )
 
   private def cs(td: TypeDecl) = Map[String, Any](
@@ -344,6 +360,16 @@ object YamlGenerator {
         "typeSignature",
         _.toString
       )
+    ),
+    MExtern.Ets(
+      nested(td, false, "ets", "typename", _.toString)
+        .orElse(nested(td, false, "java", "typename", _.toString))
+    ),
+    MExtern.Napi(
+      nested(td, false, "napi", "translator", _.toString)
+        .orElse(nested(td, false, "jni", "translator", _.toString)),
+      nested(td, false, "napi", "header", _.toString)
+        .orElse(nested(td, false, "jni", "header", _.toString))
     ),
     MExtern.Cs(
       nested(

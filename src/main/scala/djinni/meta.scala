@@ -44,6 +44,8 @@ package object meta {
       objcpp: MExtern.Objcpp,
       java: MExtern.Java,
       jni: MExtern.Jni,
+      ets: MExtern.Ets,
+      napi: MExtern.Napi,
       cs: MExtern.Cs
   ) extends Meta
   object MExtern {
@@ -100,6 +102,15 @@ package object meta {
         typeSignature: Option[
           String
         ] // The mangled Java type signature (e.g. "Ljava/lang/String;")
+    )
+    case class Ets(
+        typename: Option[String]
+    )
+    case class Napi(
+        translator: Option[
+          String
+        ], // C++ typename containing toCpp/fromCpp methods
+        header: Option[String] // Where to find the translator class
     )
     case class Cs(
         translator: Option[

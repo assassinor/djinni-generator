@@ -94,10 +94,24 @@ case class Parser(includePaths: List[String]) {
     def ext(default: Ext): Parser[Ext] =
       (rep1("+" ~> ident) >> checkExts) | success(default)
     def extRecord: Parser[Ext] = ext(
-      Ext(java = false, cpp = false, objc = false, py = false, cppcli = false)
+      Ext(
+        java = false,
+        cpp = false,
+        objc = false,
+        py = false,
+        cppcli = false,
+        ohos = false
+      )
     )
     def extInterface: Parser[Ext] = ext(
-      Ext(java = true, cpp = true, objc = true, py = true, cppcli = true)
+      Ext(
+        java = true,
+        cpp = true,
+        objc = true,
+        py = true,
+        cppcli = true,
+        ohos = true
+      )
     )
 
     def checkExts(parts: List[Ident]): Parser[Ext] = {
@@ -106,6 +120,7 @@ case class Parser(includePaths: List[String]) {
       var foundObjc = false
       var foundPy = false
       var foundCs = false
+      var foundOhos = false
 
       for (part <- parts)
         part.name match {
@@ -129,9 +144,13 @@ case class Parser(includePaths: List[String]) {
             if (foundCs) return err("Found multiple \"s\" modifiers.")
             foundCs = true
           }
+          case "h" => {
+            if (foundOhos) return err("Found multiple \"h\" modifiers.")
+            foundOhos = true
+          }
           case _ => return err("Invalid modifier \"" + part.name + "\"")
         }
-      success(Ext(foundJava, foundCpp, foundObjc, foundPy, foundCs))
+      success(Ext(foundJava, foundCpp, foundObjc, foundPy, foundCs, foundOhos))
     }
 
     def typeDef: Parser[TypeDef] = record | enum | flags | interface

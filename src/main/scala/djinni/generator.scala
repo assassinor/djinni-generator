@@ -39,6 +39,17 @@ package object generatorTools {
       javaNonnullAnnotation: Option[String],
       javaImplementAndroidOsParcelable: Boolean,
       javaUseFinalForRecord: Boolean,
+      etsOutFolder: Option[File],
+      etsPackage: Option[String],
+      etsClassAccessModifier: JavaAccessModifier.Value,
+      etsIdentStyle: JavaIdentStyle,
+      etsCppException: Option[String],
+      etsAnnotation: Option[String],
+      etsGenerateInterfaces: Boolean,
+      etsNullableAnnotation: Option[String],
+      etsNonnullAnnotation: Option[String],
+      etsUseFinalForRecord: Boolean,
+      etsImplementAndroidOsParcelable: Boolean,
       cppOutFolder: Option[File],
       cppHeaderOutFolder: Option[File],
       cppIncludePrefix: String,
@@ -62,6 +73,15 @@ package object generatorTools {
       jniClassIdentStyle: IdentConverter,
       jniFileIdentStyle: IdentConverter,
       jniGenerateMain: Boolean,
+      napiOutFolder: Option[File],
+      napiHeaderOutFolder: Option[File],
+      napiModuleName: Option[String],
+      napiIncludePrefix: String,
+      napiIncludeCppPrefix: String,
+      napiNamespace: String,
+      napiClassIdentStyle: IdentConverter,
+      napiFileIdentStyle: IdentConverter,
+      napiGenerateMain: Boolean,
       cppExt: String,
       cppHeaderExt: String,
       objcOutFolder: Option[File],
@@ -322,12 +342,25 @@ package object generatorTools {
         }
         new JavaGenerator(spec).generate(idl)
       }
+      if (spec.etsOutFolder.isDefined) {
+        if (!spec.skipGeneration) {
+          createFolder("ETS", spec.etsOutFolder.get)
+        }
+        new EtsGenerator(spec).generate(idl)
+      }
       if (spec.jniOutFolder.isDefined) {
         if (!spec.skipGeneration) {
           createFolder("JNI C++", spec.jniOutFolder.get)
           createFolder("JNI C++ header", spec.jniHeaderOutFolder.get)
         }
         new JNIGenerator(spec).generate(idl)
+      }
+      if (spec.napiOutFolder.isDefined) {
+        if (!spec.skipGeneration) {
+          createFolder("NAPI C++", spec.napiOutFolder.get)
+          createFolder("NAPI C++ header", spec.napiHeaderOutFolder.get)
+        }
+        new NapiGenerator(spec).generate(idl)
       }
       if (spec.objcOutFolder.isDefined) {
         if (!spec.skipGeneration) {
@@ -527,6 +560,7 @@ abstract class Generator(spec: Spec) {
   implicit def identToString(ident: Ident): String = ident.name
   val idCpp = spec.cppIdentStyle
   val idJava = spec.javaIdentStyle
+  val idEts = spec.etsIdentStyle
   val idObjc = spec.objcIdentStyle
   val idPython = spec.pyIdentStyle
   val idCs = spec.cppCliIdentStyle

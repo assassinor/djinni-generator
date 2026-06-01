@@ -54,6 +54,17 @@ object Main {
     var javaNonnullAnnotation: Option[String] = None
     var javaImplementAndroidOsParcelable: Boolean = false
     var javaUseFinalForRecord: Boolean = true
+    var etsOutFolder: Option[File] = None
+    var etsPackage: Option[String] = None
+    var etsClassAccessModifier: JavaAccessModifier.Value =
+      JavaAccessModifier.Public
+    var etsCppException: Option[String] = None
+    var etsAnnotation: Option[String] = None
+    var etsGenerateInterfaces: Boolean = false
+    var etsNullableAnnotation: Option[String] = None
+    var etsNonnullAnnotation: Option[String] = None
+    var etsUseFinalForRecord: Boolean = true
+    var etsImplementAndroidOsParcelable: Boolean = false
     var jniOutFolder: Option[File] = None
     var jniHeaderOutFolderOptional: Option[File] = None
     var jniNamespace: String = "djinni_generated"
@@ -63,10 +74,20 @@ object Main {
     var jniFileIdentStyleOptional: Option[IdentConverter] = None
     val jniBaseLibClassIdentStyleOptional: Option[IdentConverter] = None
     var jniGenerateMain: Boolean = true
+    var napiOutFolder: Option[File] = None
+    var napiHeaderOutFolderOptional: Option[File] = None
+    var napiModuleName: Option[String] = None
+    var napiNamespace: String = "djinni_generated"
+    var napiClassIdentStyleOptional: Option[IdentConverter] = None
+    var napiIncludePrefix: String = ""
+    var napiIncludeCppPrefix: String = ""
+    var napiFileIdentStyleOptional: Option[IdentConverter] = None
+    var napiGenerateMain: Boolean = true
     var cppHeaderOutFolderOptional: Option[File] = None
     var cppExt: String = "cpp"
     var cppHeaderExt: String = "hpp"
     var javaIdentStyle = IdentStyle.javaDefault
+    var etsIdentStyle = IdentStyle.javaDefault
     var cppIdentStyle = IdentStyle.cppDefault
     var cppTypeEnumIdentStyle: IdentConverter = null
     var objcOutFolder: Option[File] = None
@@ -208,6 +229,54 @@ object Main {
         .text(
           "Whether generated Java classes for records should be marked 'final' (default: true). "
         )
+
+      note("\nETS")
+      opt[File]("ets-out")
+        .valueName("<out-folder>")
+        .foreach(x => etsOutFolder = Some(x))
+        .text(
+          "The output for the ETS type files (Generator disabled if unspecified)."
+        )
+      opt[String]("ets-package")
+        .valueName("...")
+        .foreach(x => etsPackage = Some(x))
+        .text("The package name to use for generated ETS classes.")
+      opt[JavaAccessModifier.Value]("ets-class-access-modifier")
+        .valueName("<public/package>")
+        .foreach(x => etsClassAccessModifier = x)
+        .text(
+          "The access modifier to use for generated ETS classes (default: public)."
+        )
+      opt[String]("ets-cpp-exception")
+        .valueName("<exception-class>")
+        .foreach(x => etsCppException = Some(x))
+        .text(
+          "The type for translated C++ exceptions in ETS."
+        )
+      opt[String]("ets-annotation")
+        .valueName("<annotation-class>")
+        .foreach(x => etsAnnotation = Some(x))
+        .text("ETS annotation (@Foo) to place on all generated ETS classes")
+      opt[Boolean]("ets-generate-interfaces")
+        .valueName("<true/false>")
+        .foreach(x => etsGenerateInterfaces = x)
+        .text(
+          "Whether ETS interfaces should be used instead of abstract classes where possible (default: false)."
+        )
+      opt[String]("ets-nullable-annotation")
+        .valueName("<nullable-annotation-class>")
+        .foreach(x => etsNullableAnnotation = Some(x))
+        .text("ETS annotation (@Nullable) for optional values")
+      opt[String]("ets-nonnull-annotation")
+        .valueName("<nonnull-annotation-class>")
+        .foreach(x => etsNonnullAnnotation = Some(x))
+        .text("ETS annotation (@Nonnull) for non-optional values")
+      opt[Boolean]("ets-use-final-for-record")
+        .valueName("<use-final-for-record>")
+        .foreach(x => etsUseFinalForRecord = x)
+        .text(
+          "Whether generated ETS classes for records should be marked 'final' (default: true). "
+        )
       note("\nC++")
       opt[File]("cpp-out")
         .valueName("<out-folder>")
@@ -332,6 +401,46 @@ object Main {
         .foreach(x => jniGenerateMain = x)
         .text(
           "Generate a source file (djinni_jni_main.cpp) that includes the default JNI_OnLoad & JNI_OnUnload implementation from the djinni-support-lib. (default: true)"
+        )
+
+      note("\nNAPI")
+      opt[File]("napi-out")
+        .valueName("<out-folder>")
+        .foreach(x => napiOutFolder = Some(x))
+        .text(
+          "The folder for the NAPI C++ output files (Generator disabled if unspecified)."
+        )
+      opt[File]("napi-header-out")
+        .valueName("<out-folder>")
+        .foreach(x => napiHeaderOutFolderOptional = Some(x))
+        .text(
+          "The folder for the NAPI C++ header files (default: the same as --napi-out)."
+        )
+      opt[String]("napi-module-name")
+        .valueName("<name>")
+        .foreach(x => napiModuleName = Some(x))
+        .text("The HarmonyOS NAPI module name used by DjinniNapiMain.cpp.")
+      opt[String]("napi-include-prefix")
+        .valueName("<prefix>")
+        .foreach(napiIncludePrefix = _)
+        .text(
+          "The prefix for #includes of NAPI header files from NAPI C++ files."
+        )
+      opt[String]("napi-include-cpp-prefix")
+        .valueName("<prefix>")
+        .foreach(napiIncludeCppPrefix = _)
+        .text(
+          "The prefix for #includes of the main header files from NAPI C++ files."
+        )
+      opt[String]("napi-namespace")
+        .valueName("...")
+        .foreach(x => napiNamespace = x)
+        .text("The namespace name to use for generated NAPI C++ classes.")
+      opt[Boolean]("napi-generate-main")
+        .valueName("<true/false>")
+        .foreach(x => napiGenerateMain = x)
+        .text(
+          "Generate DjinniNapiMain.cpp for the HarmonyOS NAPI module entry. (default: true)"
         )
 
       note("\nObjective-C")
@@ -613,6 +722,33 @@ object Main {
         c => { jniFileIdentStyleOptional = Some(c) }
       )
 
+      note("\nETS and NAPI options:")
+      identStyle(
+        "ident-ets-enum",
+        "FOO_BAR",
+        c => { etsIdentStyle = etsIdentStyle.copy(enum = c) }
+      )
+      identStyle(
+        "ident-ets-field",
+        "fooBar",
+        c => { etsIdentStyle = etsIdentStyle.copy(field = c) }
+      )
+      identStyle(
+        "ident-ets-type",
+        "FooBar",
+        c => { etsIdentStyle = etsIdentStyle.copy(ty = c) }
+      )
+      identStyle(
+        "ident-napi-class",
+        "FooBar",
+        c => { napiClassIdentStyleOptional = Some(c) }
+      )
+      identStyle(
+        "ident-napi-file",
+        "foo_bar",
+        c => { napiFileIdentStyleOptional = Some(c) }
+      )
+
       note("\nObjective-C options:")
       identStyle(
         "ident-objc-enum",
@@ -746,6 +882,16 @@ object Main {
     val jniHeaderOutFolder =
       if (jniHeaderOutFolderOptional.isDefined) jniHeaderOutFolderOptional
       else jniOutFolder
+    val napiHeaderOutFolder =
+      if (napiHeaderOutFolderOptional.isDefined) napiHeaderOutFolderOptional
+      else napiOutFolder
+    if (napiOutFolder.isDefined && napiGenerateMain && napiModuleName.isEmpty) {
+      System.err.println(
+        "--napi-module-name is required when --napi-generate-main=true"
+      )
+      System.exit(1)
+      return
+    }
     val objcHeaderOutFolder =
       if (objcHeaderOutFolderOptional.isDefined) objcHeaderOutFolderOptional
       else objcOutFolder
@@ -761,6 +907,10 @@ object Main {
     jniBaseLibClassIdentStyleOptional.getOrElse(jniClassIdentStyle)
     val jniFileIdentStyle =
       jniFileIdentStyleOptional.getOrElse(cppFileIdentStyle)
+    val napiClassIdentStyle =
+      napiClassIdentStyleOptional.getOrElse(cppIdentStyle.ty)
+    val napiFileIdentStyle =
+      napiFileIdentStyleOptional.getOrElse(cppFileIdentStyle)
     var objcFileIdentStyle =
       objcFileIdentStyleOptional.getOrElse(objcIdentStyle.ty)
     val objcppIncludeObjcPrefix =
@@ -827,8 +977,8 @@ object Main {
       cppOutRequired = cppOutFolder.isDefined,
       objcOutRequired = objcOutFolder.isDefined,
       objcppOutRequired = objcppOutFolder.isDefined,
-      javaOutRequired = javaOutFolder.isDefined,
-      jniOutRequired = jniOutFolder.isDefined,
+      javaOutRequired = javaOutFolder.isDefined || etsOutFolder.isDefined,
+      jniOutRequired = jniOutFolder.isDefined || napiOutFolder.isDefined,
       cppCliOutRequired = cppCliOutFolder.isDefined
     ) match {
       case Some(err) =>
@@ -875,6 +1025,17 @@ object Main {
       javaNonnullAnnotation,
       javaImplementAndroidOsParcelable,
       javaUseFinalForRecord,
+      etsOutFolder,
+      etsPackage,
+      etsClassAccessModifier,
+      etsIdentStyle,
+      etsCppException,
+      etsAnnotation,
+      etsGenerateInterfaces,
+      etsNullableAnnotation,
+      etsNonnullAnnotation,
+      etsUseFinalForRecord,
+      etsImplementAndroidOsParcelable,
       cppOutFolder,
       cppHeaderOutFolder,
       cppIncludePrefix,
@@ -898,6 +1059,15 @@ object Main {
       jniClassIdentStyle,
       jniFileIdentStyle,
       jniGenerateMain,
+      napiOutFolder,
+      napiHeaderOutFolder,
+      napiModuleName,
+      napiIncludePrefix,
+      napiIncludeCppPrefix,
+      napiNamespace,
+      napiClassIdentStyle,
+      napiFileIdentStyle,
+      napiGenerateMain,
       cppExt,
       cppHeaderExt,
       objcOutFolder,

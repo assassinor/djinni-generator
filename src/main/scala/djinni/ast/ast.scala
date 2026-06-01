@@ -64,10 +64,11 @@ case class Ext(
     cpp: Boolean,
     objc: Boolean,
     py: Boolean,
-    cppcli: Boolean
+    cppcli: Boolean,
+    ohos: Boolean
 ) {
   def any(): Boolean = {
-    java || cpp || objc || py || cppcli
+    java || cpp || objc || py || cppcli || ohos
   }
 }
 
