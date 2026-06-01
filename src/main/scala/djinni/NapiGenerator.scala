@@ -103,6 +103,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
         w.wlOutdent("public:")
         w.wl(s"using CppType = $cppSelf;")
         w.wl("using NapiType = napi_value;")
+        w.wl(s"using Boxed = $helper;")
         w.wl("static CppType toCpp(napi_env env, NapiType value);")
         w.wl("static NapiType fromCpp(napi_env env, CppType value);")
       }
@@ -138,6 +139,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
         w.wlOutdent("public:")
         w.wl(s"using CppType = $cppSelf;")
         w.wl("using NapiType = napi_value;")
+        w.wl(s"using Boxed = $helper;")
         w.wl("static CppType toCpp(napi_env env, NapiType value);")
         w.wl("static NapiType fromCpp(napi_env env, const CppType& value);")
       }
@@ -203,8 +205,6 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
     i.consts.foreach(c => {
       refs.find(c.ty)
     })
-    refs.napiCpp.add("#include <array>")
-
     val helper = napiMarshal.helperClass(ident.name)
     val cppSelf = cppMarshal.fqTypename(ident, i) + cppTypeArgs(typeParams)
     writeNapiHppFile(ident.name, origin, refs.napiHpp, Nil) { w =>
@@ -214,8 +214,13 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
         w.wlOutdent("public:")
         w.wl(s"using Base = ::djinni::NapiInterface<$cppSelf, $helper>;")
         w.wl(s"using CppType = std::shared_ptr<$cppSelf>;")
+        w.wl(s"using CppOptType = std::shared_ptr<$cppSelf>;")
         w.wl("using NapiType = napi_value;")
+        w.wl(s"using Boxed = $helper;")
         w.wl("static CppType toCpp(napi_env env, NapiType value);")
+        w.wl(
+          "static NapiType fromCppOpt(napi_env env, const CppOptType& value);"
+        )
         w.wl("static NapiType fromCpp(napi_env env, const CppType& value);")
         w.wl("static void registerNapi(napi_env env, napi_value exports);")
         w.wl(s"static constexpr bool HasCppProxy = ${if (i.ext.cpp) "true"
@@ -267,6 +272,12 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
     w.wl
     w.wl(
       s"auto $helper::fromCpp(napi_env env, const CppType& value) -> NapiType"
+    ).braced {
+      w.wl("return fromCppOpt(env, value);")
+    }
+    w.wl
+    w.wl(
+      s"auto $helper::fromCppOpt(napi_env env, const CppOptType& value) -> NapiType"
     ).braced {
       w.wl("return Base::_toNapi(env, value);")
     }
@@ -384,12 +395,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
         s"static napi_value ${cppProxyDestroyFunctionName(ident)}(napi_env env, napi_callback_info info)"
       ).braced {
         w.wl("try").braced {
-          w.wl("std::array<napi_value, 1> args{};")
-          w.wl("size_t argc = args.size();")
-          w.wl(
-            "DJINNI_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args.data(), nullptr, nullptr));"
-          )
-          w.wl("""DJINNI_NAPI_ASSERT(env, argc >= 1, "not enough arguments")""")
+          w.wl("::djinni::NapiArgs args(env, info, 1);")
           w.wl(s"::djinni::destroyCppProxyHandle<$cppSelf>(env, args[0]);")
           w.wl("return ::djinni::undefined(env);")
         }
@@ -404,12 +410,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
         s"static napi_value ${cppProxyFactoryFunctionName(ident)}(napi_env env, napi_callback_info info)"
       ).braced {
         w.wl("try").braced {
-          w.wl("std::array<napi_value, 1> args{};")
-          w.wl("size_t argc = args.size();")
-          w.wl(
-            "DJINNI_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args.data(), nullptr, nullptr));"
-          )
-          w.wl("""DJINNI_NAPI_ASSERT(env, argc >= 1, "not enough arguments")""")
+          w.wl("::djinni::NapiArgs args(env, info, 1);")
           w.wl(
             s"::djinni::registerCppProxyFactory(env, ${q(idEts.ty(ident))}, args[0]);"
           )
@@ -429,14 +430,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
       ).braced {
         w.wl("try").braced {
           val argCount = m.params.size + (if (m.static) 0 else 1)
-          w.wl(s"std::array<napi_value, $argCount> args{};")
-          w.wl(s"size_t argc = args.size();")
-          w.wl(
-            "DJINNI_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args.data(), nullptr, nullptr));"
-          )
-          w.wl(
-            s"""DJINNI_NAPI_ASSERT(env, argc >= ${argCount}, "not enough arguments")"""
-          )
+          w.wl(s"::djinni::NapiArgs args(env, info, $argCount);")
           val offset = if (m.static) 0 else 1
           if (!m.static) {
             w.wl(s"auto self = $helper::toCpp(env, args[0]);")
@@ -490,6 +484,7 @@ class NapiGenerator(spec: Spec) extends Generator(spec) {
           w => {
             w.wl("static napi_value Init(napi_env env, napi_value exports)")
               .braced {
+                w.wl("::djinni::napiInit(env);")
                 for (td <- idl if td.body.isInstanceOf[Interface]) {
                   w.wl(
                     s"${napiMarshal.helperClass(td.ident.name)}::registerNapi(env, exports);"

@@ -127,24 +127,9 @@ class EtsGenerator(spec: Spec) extends Generator(spec) {
         writeNativeModuleAccessor(w, ident)
         w.wl
       }
-      if (i.ext.ohos) {
-        w.wl("let _djinniNextObjectId: number = 1")
-        w.wl
-      }
-
       writeDoc(w, doc)
       val typeParamsText = etsTypeParams(typeParams)
       w.w(s"export abstract class ${idEts.ty(ident)}$typeParamsText").braced {
-        if (i.ext.ohos) {
-          w.wl(
-            "private readonly _djinniObjectId: number = _djinniNextObjectId++"
-          )
-          w.wl
-          w.wl("_djinni_getObjectId(): number").braced {
-            w.wl("return this._djinniObjectId")
-          }
-          w.wl
-        }
         if (needsNative) {
           w.wl("private readonly _djinniNativeRef?: number")
           w.wl

@@ -49,42 +49,60 @@ class NapiMarshal(spec: Spec) extends Marshal(spec) {
   def helperClass(name: String): String = spec.napiClassIdentStyle(name)
 
   def helperClass(tm: MExpr): String = tm.base match {
+    case _ => helperName(tm) + helperTemplates(tm)
+  }
+
+  private def helperName(tm: MExpr): String = tm.base match {
     case d: MDef    => withNs(Some(spec.napiNamespace), helperClass(d.name))
     case e: MExtern => e.napi.translator.get
-    case MOptional =>
-      tm.args.head.base match {
-        case d: MDef if d.defType == DInterface    => helperClass(tm.args.head)
-        case e: MExtern if e.defType == DInterface => helperClass(tm.args.head)
-        case _ =>
-          s"::djinni::Optional<${spec.cppOptionalTemplate}, ${helperClass(tm.args.head)}>"
-      }
-    case MList =>
-      s"::djinni::List<${helperClass(tm.args.head)}>"
-    case MSet =>
-      s"::djinni::Set<${helperClass(tm.args.head)}>"
-    case MMap =>
-      s"::djinni::Map<${helperClass(tm.args.head)}, ${helperClass(tm.args(1))}>"
     case p: MPrimitive =>
-      p.idlName match {
-        case "bool" => "::djinni::Bool"
-        case "i64"  => "::djinni::I64"
-        case _      => s"::djinni::Number<${p.cName}>"
-      }
+      withNs(
+        Some("djinni"),
+        p.idlName match {
+          case "i8"   => "I8"
+          case "i16"  => "I16"
+          case "i32"  => "I32"
+          case "i64"  => "I64"
+          case "f32"  => "F32"
+          case "f64"  => "F64"
+          case "bool" => "Bool"
+        }
+      )
     case MString =>
-      if (spec.cppUseWideStrings) "::djinni::WString" else "::djinni::String"
-    case MBinary      => "::djinni::Binary"
-    case MDate        => "::djinni::Date"
+      withNs(
+        Some("djinni"),
+        if (spec.cppUseWideStrings) "WString" else "String"
+      )
+    case MBinary => withNs(Some("djinni"), "Binary")
+    case MDate   => withNs(Some("djinni"), "Date")
+    case MList   => withNs(Some("djinni"), "List")
+    case MSet    => withNs(Some("djinni"), "Set")
+    case MMap    => withNs(Some("djinni"), "Map")
+    case MOptional =>
+      withNs(Some("djinni"), "Optional")
     case MParam(name) => spec.napiClassIdentStyle(name)
   }
 
+  private def helperTemplates(tm: MExpr): String = tm.base match {
+    case MOptional =>
+      assert(tm.args.size == 1)
+      s"<${spec.cppOptionalTemplate}, ${helperClass(tm.args.head)}>"
+    case MList | MSet =>
+      assert(tm.args.size == 1)
+      tm.args.map(helperClass).mkString("<", ", ", ">")
+    case MMap =>
+      assert(tm.args.size == 2)
+      tm.args.map(helperClass).mkString("<", ", ", ">")
+    case _ => ""
+  }
+
   def references(m: Meta, exclude: String = ""): Seq[SymbolReference] = {
-    val _ = exclude
     m match {
       case _: MOpaque =>
         List(ImportRef(q(napiBaseLibIncludePrefix + "Marshal.hpp")))
-      case d: MDef    => List(ImportRef(include(d.name)))
-      case e: MExtern => List(ImportRef(e.napi.header.get))
-      case _          => Nil
+      case d: MDef if d.name != exclude => List(ImportRef(include(d.name)))
+      case e: MExtern                   => List(ImportRef(e.napi.header.get))
+      case _                            => Nil
     }
   }
 
