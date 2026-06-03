@@ -104,7 +104,8 @@ package object meta {
         ] // The mangled Java type signature (e.g. "Ljava/lang/String;")
     )
     case class Ets(
-        typename: Option[String]
+        typename: Option[String],
+        imports: Seq[String]
     )
     case class Napi(
         translator: Option[

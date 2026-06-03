@@ -109,15 +109,12 @@ class EtsGenerator(spec: Spec) extends Generator(spec) {
       typeParams: Seq[TypeParam],
       i: Interface
   ): Unit = {
-    val refs = mutable.TreeSet[String]()
+    val imports = mutable.TreeSet[String]()
     i.methods.foreach { m =>
-      m.params.foreach(p => collectRefs(p.ty.resolved, ident.name, refs))
-      m.ret.foreach(r => collectRefs(r.resolved, ident.name, refs))
+      m.params.foreach(p => collectImports(p.ty.resolved, ident.name, imports))
+      m.ret.foreach(r => collectImports(r.resolved, ident.name, imports))
     }
-    i.consts.foreach(c => collectRefs(c.ty.resolved, ident.name, refs))
-
-    val imports =
-      refs.toSeq.map(r => s"import { ${idEts.ty(r)} } from './${idEts.ty(r)}'")
+    i.consts.foreach(c => collectImports(c.ty.resolved, ident.name, imports))
     val needsNative = i.ext.cpp
     writeEtsFile(ident.name, origin, imports) { w =>
       if (needsNative) {
@@ -392,21 +389,24 @@ class EtsGenerator(spec: Spec) extends Generator(spec) {
     s"${idEts.method(owner)}NativeDestroy"
 
   private def refsForRecord(r: Record, self: String): Seq[String] = {
-    val refs = mutable.TreeSet[String]()
-    r.fields.foreach(f => collectRefs(f.ty.resolved, self, refs))
-    r.consts.foreach(c => collectRefs(c.ty.resolved, self, refs))
-    refs.toSeq.map(r => s"import { ${idEts.ty(r)} } from './${idEts.ty(r)}'")
+    val imports = mutable.TreeSet[String]()
+    r.fields.foreach(f => collectImports(f.ty.resolved, self, imports))
+    r.consts.foreach(c => collectImports(c.ty.resolved, self, imports))
+    imports.toSeq
   }
 
-  private def collectRefs(
+  private def collectImports(
       tm: MExpr,
       self: String,
-      refs: mutable.Set[String]
+      imports: mutable.Set[String]
   ): Unit = {
-    tm.args.foreach(collectRefs(_, self, refs))
+    tm.args.foreach(collectImports(_, self, imports))
     tm.base match {
-      case d: MDef if d.name != self => refs.add(d.name)
-      case _                         =>
+      case d: MDef if d.name != self =>
+        imports.add(s"import { ${idEts.ty(d.name)} } from './${idEts.ty(d.name)}'")
+      case e: MExtern =>
+        imports ++= e.ets.imports
+      case _ =>
     }
   }
 

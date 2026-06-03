@@ -363,7 +363,9 @@ object YamlGenerator {
     ),
     MExtern.Ets(
       nested(td, false, "ets", "typename", _.toString)
-        .orElse(nested(td, false, "java", "typename", _.toString))
+        .orElse(nested(td, false, "java", "typename", _.toString)),
+      nestedSeq(td, false, "ets", "imports", _.toString)
+        .getOrElse(Seq.empty)
     ),
     MExtern.Napi(
       nested(td, false, "napi", "translator", _.toString)
@@ -414,6 +416,25 @@ object YamlGenerator {
       .map(m => m.get(key))
       .flatten
       .map(v => convert(v)) match {
+      case None if isRequired =>
+        throw Error(td.ident.loc, s"missing '$lang' definitions").toException
+      case other => other
+    }
+  }
+
+  private def nestedSeq[T](
+      td: ExternTypeDecl,
+      isRequired: Boolean,
+      lang: String,
+      key: String,
+      convert: Any => T
+  ): Option[Seq[T]] = {
+    nested(td, lang)
+      .flatMap(_.get(key))
+      .map {
+        case xs: java.util.List[_] => xs.asScala.toSeq.map(convert)
+        case x                     => Seq(convert(x))
+      } match {
       case None if isRequired =>
         throw Error(td.ident.loc, s"missing '$lang' definitions").toException
       case other => other
